@@ -1,0 +1,143 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+  <title>Игра в жизнь</title> 
+</head> 
+<body> 
+<h1>Игра в жизнь</h1> 
+
+<canvas id="myCanvas" class = "border" width="400px" height="400px"> 
+  Извините, ваш браузер не поддерживает canvas. 
+</canvas> 
+<div>
+<button class="buttons" id="startButton">Start</button>
+<button class="buttons" id="buttonStop">Delete</button></div>
+<style>
+    body{
+        display: grid;
+        place-items: center;
+        margin: 0;
+        background-color: #b9aabc;
+    }
+    h1{
+        font-family: sans-serif;
+        font-weight: bold;
+        color: #FFC0CB;
+        text-shadow: 2px 2px 2px #3a0816;
+    }
+    .border{
+        border:2px solid rgb(153, 38, 136);
+        border-radius: 20px;
+    }
+    .buttons{
+      border-radius: 3px;
+      margin: 5px;
+      text-align: center;
+      font-weight: bold;
+      color: #3a0816;
+      background-color: #f1c6cd;
+      border-color: #cc5577;
+    }
+</style>
+<script> 
+const canvas = document.getElementById("myCanvas"); 
+const ctx = canvas.getContext("2d"); 
+
+let cellSize = 20;  
+let fieldSize = 20;  
+
+let curField = new Array(fieldSize); 
+let nextField = new Array(fieldSize); 
+
+
+for (let i = 0; i < fieldSize; i++) { 
+  nextField[i] = new Array(fieldSize); 
+  curField[i] = new Array(fieldSize).fill(0); 
+}
+//Подсчитывает количество живых соседей для клетки (r, c).
+function neighborCount(r, c){ 
+  let sum = 0; 
+  for (let i = -1; i <= 1; i++) 
+    for (let j = -1; j <= 1; j++) 
+      sum += curField[(r + i + fieldSize) % fieldSize][(c + j + fieldSize) % fieldSize]; // используем отстаток от деления для переодичности (тор)
+  sum -= curField[r][c]; 
+  return sum; 
+}
+
+function makeStep(){ 
+  for (let i = 0; i < fieldSize; i++) 
+    for (let j = 0; j < fieldSize; j++){ 
+      let nbs = neighborCount(i, j); 
+      if ((curField[i][j] == 0 && nbs == 3) || (curField[i][j] == 1 && (nbs == 2 || nbs == 3))) 
+        nextField[i][j] = 1; 
+      else 
+        nextField[i][j] = 0; 
+    }
+  
+  for (let i = 0; i < fieldSize; i++) 
+    for (let j = 0; j < fieldSize; j++) 
+      curField[i][j] = nextField[i][j]; 
+}
+
+function draw(){ 
+  for (let i = 0; i < fieldSize; i++) 
+    for (let j = 0; j < fieldSize; j++){ 
+      ctx.fillStyle = curField[i][j] == 0 ? "#FFC0CB" : "purple"; 
+      ctx.fillRect(i * cellSize, j * cellSize, cellSize, cellSize); 
+    }
+}
+
+function go(){
+  makeStep();  
+  draw();      
+}
+
+function koord(event) {
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+
+  const i = Math.floor(x / cellSize);
+  const j = Math.floor(y / cellSize);
+
+
+  if (i >= 0 && i < fieldSize && j >= 0 && j < fieldSize) {
+    curField[i][j] = curField[i][j] === 0 ? 1 : 0; 
+    draw();  
+  }
+}
+
+
+
+let tm;
+function startGame(){
+    if(!tm){
+      tm = setInterval(go, 100);
+      document.getElementById("startButton").textContent = "Stop";
+    }
+    else{
+      clearInterval(tm);
+      tm = null;
+      document.getElementById("startButton").textContent = "Start";
+    }
+}
+function clearField(){
+  clearInterval(tm);
+  tm = null;
+  for(let i = 0; i < fieldSize; i++){
+    for(let j = 0; j < fieldSize; j++){
+      curField[i][j] = 0;
+    }
+  }
+  draw();
+  document.getElementById("startButton").textContent = "Start";
+}
+
+document.getElementById("startButton").addEventListener("click", startGame);
+document.getElementById("buttonStop").addEventListener("click", clearField);
+canvas.addEventListener("click", koord);
+draw();
+</script> 
+
+</body> 
+</html>
